@@ -8,7 +8,7 @@
 # make all BUILD_FOR_LINUX=1 (not fully implemented)
 # To create a debug executable, run with the command:
 # make all DEBUG=1 (un-tested)
-# To clean up map and libadikted run:
+# To clean up map run:
 # make clean
 # To perform a normal clean, and a clean of libslang run:
 # make clean-inc-libs
@@ -82,15 +82,43 @@ WARNFLAGS          = -Wall -Wextra -Wno-pedantic -Wno-conversion -Wno-traditiona
 PLATFORM_FLAGS     = -march=i486
 CSTANDARD          = -std=gnu89
 CC                 = $(CROSS_COMPILE)gcc$(CROSS_EXEEXT) $(CSTANDARD) $(WARNFLAGS)
-CFLAGS             = -c -O -I. -I../lib/$(SLANG_NAME)/src $(DLL_FLAG) $(PLATFORM_FLAGS)
-CFLAGS_DEBUG       = -c -g -I. -I../lib/$(SLANG_NAME)/src $(DLL_FLAG) $(PLATFORM_FLAGS) -DDEBUG
+CFLAGS             = -c -O -I. -I../lib/$(SLANG_NAME)/src $(DLL_FLAG) $(PLATFORM_FLAGS) -DBUILD_SINGLE=1
+CFLAGS_DEBUG       = -c -g -I. -I../lib/$(SLANG_NAME)/src $(DLL_FLAG) $(PLATFORM_FLAGS) -DBUILD_SINGLE=1 -DDEBUG
 LINK               = $(CROSS_COMPILE)gcc$(CROSS_EXEEXT)
 WINDRES            = $(CROSS_COMPILE)windres$(CROSS_EXEEXT)
 RES                = obj/map_private.res
 RC                 = map_private.rc
 LFLAGS             = -static-libgcc $(PLATFORM_FLAGS)
 LFLAGS_DEBUG       = -static-libgcc $(PLATFORM_FLAGS) -DDEBUG
-LIBS               = -L. -L../libadikted/bin -L..$(SLANG_BIN_FOLDER) -lslang -ladikted
+LIBS               = -L. -L..$(SLANG_BIN_FOLDER) -lslang
+L                  = ../libadikted/
+
+LIB_SRC= \
+$(L)arr_utils.c \
+$(L)bulcommn.c \
+$(L)dernc.c \
+$(L)draw_map.c \
+$(L)graffiti.c \
+$(L)graffiti_font.c \
+$(L)lbfileio.c \
+$(L)lev_column.c \
+$(L)lev_data.c \
+$(L)lev_files.c \
+$(L)lev_script.c \
+$(L)lev_things.c \
+$(L)libadi_main.c \
+$(L)memfile.c \
+$(L)msg_log.c \
+$(L)obj_actnpts.c \
+$(L)obj_column.c \
+$(L)obj_column_def.c \
+$(L)obj_column_per.c \
+$(L)obj_slabs.c \
+$(L)obj_things.c \
+$(L)xcubtxtr.c \
+$(L)xtabdat8.c \
+$(L)xtabjty.c
+
 SRC                = \
 input_kb.c \
 main.c \
@@ -106,11 +134,12 @@ scr_thing.c \
 scr_txted.c \
 scr_txtgen.c \
 textmenu.c \
-var_utils.c
+var_utils.c 
+
 OBJ                = $(addprefix obj/,$(SRC:.c=.o))
+LIB_OBJ            = $(addprefix obj/lib/,$(LIB_SRC:.c=.o))
 BIN                = bin/map$(EXEEXT)
 LIB_SLANG          = libslang$(LIBEXT)
-LIB_ADIKTED        = adikted$(LIBEXT)
 RM                 = rm -f
 MKDIR              = mkdir -p
 CP                 = cp -f
@@ -121,17 +150,16 @@ STRIP              = strip --strip-all
 all: make-directories pre-build $(SRC) $(BIN) post-build
 
 make-directories:
-	$(MKDIR) ../lib bin obj
+	$(MKDIR) ../lib bin obj obj/lib obj/libadikted
 
 create-package: fill-pkg-directory
 
 strip-executables:
-	$(STRIP) pkg/map$(EXEEXT) pkg/$(LIB_SLANG) pkg/$(LIB_ADIKTED)
+	$(STRIP) pkg/map$(EXEEXT) pkg/$(LIB_SLANG)
 
 fill-pkg-directory:
 	$(MKDIR) pkg/docs
 	$(CP) $(BIN) pkg/
-	$(CP) ../libadikted/bin/$(LIB_ADIKTED) pkg/
 	$(CP) ..$(SLANG_BIN_FOLDER)/$(LIB_SLANG) pkg/
 	$(CP) map.hlp pkg/
 	$(CP) map.ini pkg/
@@ -139,20 +167,24 @@ fill-pkg-directory:
 
 post-build: create-package
 
-pre-build: $(LIB_SLANG) $(LIB_ADIKTED)
+pre-build:
 
 clean-inc-libs: clean
 	cd ../lib/$(SLANG_NAME) && make clean
 
 clean:
-	$(RM) $(OBJ) $(BIN) $(BIN:$(EXEEXT)=$(OTHER_EXEEXT)) $(RES)
+	$(RM) $(OBJ) $(LIB_OBJ) $(BIN) $(BIN:$(EXEEXT)=$(OTHER_EXEEXT)) $(RES)
 	$(RM)r pkg/*
-	cd ../libadikted && make clean
 
-$(BIN): $(OBJ) $(RES)
-	$(LINK) $(if $(filter yes, $(DEBUGME)),$(LFLAGS_DEBUG),$(LFLAGS)) $(LIBS) -o $@ $(OBJ) $(RES)
+$(BIN): $(OBJ) $(LIB_OBJ) $(RES)
+	$(LINK) $(if $(filter yes, $(DEBUGME)),$(LFLAGS_DEBUG),$(LFLAGS)) $(LIBS) -o $@ $(OBJ) $(LIB_OBJ) $(RES)
+
+obj/lib/../libadikted/%.o: ../libadikted/%.c
+	@echo 'BB'
+	$(CC) $(if $(filter yes, $(DEBUGME)),$(CFLAGS_DEBUG),$(CFLAGS)) $< -o $@
 
 obj/%.o: %.c
+	@echo 'AA'
 	$(CC) $(if $(filter yes, $(DEBUGME)),$(CFLAGS_DEBUG),$(CFLAGS)) $< -o $@
 
 $(RES): $(RC)
@@ -165,6 +197,3 @@ $(LIB_SLANG): $(SLANG_ARCHIVE)
 	-tar -C ../lib/ -xf $<
 	cd ../lib/$(SLANG_NAME) && $(SLANG_BUILDCOMMAND)
 	-$(RM) ..$(SLANG_BIN_FOLDER)/libslang.a
-
-$(LIB_ADIKTED):
-	cd ../libadikted && make
