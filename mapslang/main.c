@@ -204,22 +204,22 @@ void get_command_line_options(struct SCRMODE_DATA *scrmode,struct WORKMODE_DATA 
         } else
         if ((strcmp(comnd+1,"q")==0)||(strcmp(comnd+1,"Q")==0))
         {
-          scrmode->automated_commands[cmnds_count]=KEY_CTRL_Q;
+          //scrmode->automated_commands[cmnds_count]=KEY_CTRL_Q;
           cmnds_count++;
         } else
         if (strcmp(comnd+1,"r")==0)
         {
-          scrmode->automated_commands[cmnds_count]=KEY_CTRL_R;
+          //scrmode->automated_commands[cmnds_count]=KEY_CTRL_R;
           cmnds_count++;
         } else
         if (strcmp(comnd+1,"n")==0)
         {
-          scrmode->automated_commands[cmnds_count]=KEY_CTRL_N;
+          //scrmode->automated_commands[cmnds_count]=KEY_CTRL_N;
           cmnds_count++;
         } else
         if (strcmp(comnd+1,"bmp")==0)
         {
-          scrmode->automated_commands[cmnds_count]=KEY_CTRL_B;
+          //scrmode->automated_commands[cmnds_count]=KEY_CTRL_B;
           cmnds_count++;
         } else
         if (strcmp(comnd+1,"ds")==0)
@@ -241,7 +241,7 @@ void get_command_line_options(struct SCRMODE_DATA *scrmode,struct WORKMODE_DATA 
         } else
         if (strcmp(comnd+1,"s")==0)
         {
-          scrmode->automated_commands[cmnds_count]=KEY_F5;
+          scrmode->automated_commands[cmnds_count]=KEY_F0 + 5;
           cmnds_count++;
           get_savout_fname=true;
         } else

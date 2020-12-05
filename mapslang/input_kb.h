@@ -20,6 +20,8 @@
 #ifndef ADIKT_INPUTKB_H
 #define ADIKT_INPUTKB_H
 
+#include <curses.h>
+
 #define ERR_KB_NONE      0x000
 #define ERR_KB_ALREADY   0x001
 #define ERR_KB_INTERNAL  0x004
@@ -31,23 +33,25 @@
 #define ABORT_KEY 7			       // character code for ^G
 #endif
 
-#define KEY_BACKSP     127
+#define KEY_BACKSP     8
 #define KEY_TAB        9
-#define KEY_ENTER      13
 #define KEY_ESCAPE     27
 
-#define KEY_F1         0x201
-#define KEY_F2         0x202
-#define KEY_F3         0x203
-#define KEY_F4         0x204
-#define KEY_F5         0x205
-#define KEY_F6         0x206
-#define KEY_F7         0x207
-#define KEY_F8         0x208
-#define KEY_F9         0x209
-#define KEY_F10        0x20a
-#define KEY_F11        0x20b
-#define KEY_F12        0x20c
+#undef KEY_ENTER
+#define KEY_ENTER      13
+
+#define KEY_F1         KEY_F0 + 1
+#define KEY_F2         KEY_F0 + 2
+#define KEY_F3         KEY_F0 + 3
+#define KEY_F4         KEY_F0 + 4
+#define KEY_F5         KEY_F0 + 5
+#define KEY_F6         KEY_F0 + 6
+#define KEY_F7         KEY_F0 + 7
+#define KEY_F8         KEY_F0 + 8
+#define KEY_F9         KEY_F0 + 9
+#define KEY_F10        KEY_F0 + 10
+#define KEY_F11        KEY_F0 + 11
+#define KEY_F12        KEY_F0 + 12
 
 #define KEY_CTRL_A      1
 #define KEY_CTRL_B      2
@@ -77,11 +81,11 @@
 #define KEY_CTRL_Z     26
 #define KEY_CTRL_SPACE 65535
 
-#define KEY_UP         0x101
-#define KEY_DOWN       0x102
-#define KEY_LEFT       0x103
-#define KEY_RIGHT      0x104
-#define KEY_PGUP       0x105
+// #define KEY_UP         0x101
+// #define KEY_DOWN       0x102
+// #define KEY_LEFT       0x103
+// #define KEY_RIGHT      0x104
+#define KEY_PGUP       0x1100
 #define KEY_PGDOWN     0x106
 #define KEY_HOME       0x107
 #define KEY_END        0x108

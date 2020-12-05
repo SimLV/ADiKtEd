@@ -29,6 +29,8 @@
 #include "obj_actnpts.h"
 #include "msg_log.h"
 
+#define stricmp strcasecmp
+
 /* Conditional statements */
 const char if_cmdtext[]="IF";
 const char if_available_cmdtext[]="IF_AVAILABLE";

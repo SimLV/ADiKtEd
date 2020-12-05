@@ -21,7 +21,7 @@
 #include "output_scr.h"
 
 #include "../libadikted/adikted.h"
-#include <slang.h>
+#include <curses.h>
 
 short screen_initied=false;
 struct DRAW_DATA drawdata;
@@ -33,17 +33,18 @@ volatile int safe_update, update_required;
 
 void set_cursor_visibility(short val)
 {
-  SLtt_set_cursor_visibility(val);
+  //SLtt_set_cursor_visibility(val);
+  curs_set(val);
 }
 
 int get_screen_rows(void)
 {
-  return SLtt_Screen_Rows;
+  return getmaxy(stdscr);
 }
 
 int get_screen_cols(void)
 {
-  return SLtt_Screen_Cols;
+  return getmaxx(stdscr);
 }
 
 /*
@@ -53,7 +54,9 @@ int get_screen_cols(void)
 static void get_screen_size (void)
 {
 #if !defined(MSDOS)
-    SLtt_get_screen_size();
+    //SLtt_get_screen_size();
+    //SLtt_Screen_Rows = getmaxy(stdscr);
+    //SLtt_Screen_Cols = getmaxx(stdscr);
 #else
     int r = 0, c = 0;
     union REGS regs;
@@ -76,13 +79,19 @@ static void get_screen_size (void)
 void set_cursor_pos(int row,int col)
 {
   if (!screen_initied) return;
-  SLsmg_gotorc (row,col);
+  wmove (stdscr, row,col);
 }
 
 void screen_setcolor(int idx)
 {
   if (!screen_initied) return;
-  SLsmg_set_color(idx);
+  wattron(stdscr, COLOR_PAIR(idx));
+}
+
+void screen_resetcolor(idx)
+{
+  if (!screen_initied) return;
+  wattroff(stdscr, COLOR_PAIR(idx));
 }
 
 void screen_printf(char *format, ...)
@@ -90,7 +99,7 @@ void screen_printf(char *format, ...)
     if (!screen_initied) return;
     va_list val;
     va_start(val, format);
-    SLsmg_vprintf(format, val);
+    vwprintw(stdscr, format, val);
     va_end(val);
 }
 
@@ -99,29 +108,47 @@ void screen_printf_toeol(char *format, ...)
     if (!screen_initied) return;
     va_list val;
     va_start(val, format);
-    SLsmg_vprintf(format, val);
+    vwprintw(stdscr, format, val);
     va_end(val);
-    SLsmg_erase_eol();
+    wclrtoeol(stdscr);
 }
 
 void screen_printchr(char dst)
 {
     if (!screen_initied) return;
-    SLsmg_write_char(dst);
+    waddch(stdscr, dst);
 }
 
 void screen_clear(void)
 {
     if (!screen_initied) return;
-    SLsmg_gotorc(0,0);
-    SLsmg_erase_eos();
-    //SLsmg_cls();
+    wmove (stdscr, 0,0);
+    wclear(stdscr);
 }
 
 void screen_refresh(void)
 {
     if (!screen_initied) return;
-    SLsmg_refresh();
+    refresh();
+}
+
+void text_fill_region(int y1, int x1, int y2, int x2, int ch)
+{
+    if ((x2 < x1) || (y2 < y1))
+    {
+        fprintf(stderr, "text_fill_region: invalid args\n");
+        return;
+    }
+    char *tmp = malloc(x2 - x1 + 1);
+    memset(tmp, ch, x2 - x1);
+    tmp[(x2-x1)] = 0;
+    
+    for (int j=y1; j < y2; j++)
+    {
+      waddstr(stdscr, tmp);
+    }
+    
+    free(tmp);
 }
 
 /*
@@ -131,19 +158,27 @@ void screen_refresh(void)
 void screen_init(void)
 {
     get_screen_size();
-    SLtt_Use_Ansi_Colors = true;
+    //SLtt_Use_Ansi_Colors = true;
 #if defined(unix) && !defined(GO32)
     signal (SIGWINCH, (void *) sigwinch);
 #endif
-    if (SLsmg_init_smg()!=0)
+
+    if (initscr()==0)
     {
-      fprintf(stderr, "screen_init: SLsmg_init_smg returned error code\n");
-      SLang_reset_tty ();
+      fprintf(stderr, "screen_init: initscr returned error code\n");
       exit (1);
     }
+    start_color();
+    raw();    
 
+    /*
     SLtt_set_color(PRINT_COLOR_LGREY_ON_BLACK , "buffer", "lightgray", "black");
     SLtt_set_color(PRINT_COLOR_BLACK_ON_LGREY , "select", "black", "lightgray");
+    */
+    init_pair(PRINT_COLOR_LGREY_ON_BLACK, COLOR_WHITE+8, COLOR_BLACK);
+    init_pair(PRINT_COLOR_BLACK_ON_LGREY, COLOR_BLACK, COLOR_WHITE);
+        
+    /*
     SLtt_set_color(PRINT_COLOR_YELLOW_ON_BLUE , "status", "yellow", "blue");
     SLtt_set_color(PRINT_COLOR_LRED_ON_BLACK  , "escape", "brightred", "black");
     SLtt_set_color(PRINT_COLOR_YELLOW_ON_BLACK, "invalid", "yellow", "black");
@@ -151,24 +186,43 @@ void screen_init(void)
     SLtt_set_color(PRINT_COLOR_WHITE_ON_BLACK , "invalid", "white", "black");
     SLtt_set_color(PRINT_COLOR_LMAGENT_ON_BLACK, "graffiti", "brightmagenta", "black");
     SLtt_set_color(PRINT_COLOR_RED_ON_WHITE   , "cursor", "red", "white");
+    */
+    init_pair(PRINT_COLOR_YELLOW_ON_BLUE, COLOR_YELLOW+8, COLOR_BLUE);
+    init_pair(PRINT_COLOR_LRED_ON_BLACK, COLOR_RED+8, COLOR_BLACK);
+    init_pair(PRINT_COLOR_YELLOW_ON_BLACK, COLOR_YELLOW+8, COLOR_BLACK);
+    init_pair(PRINT_COLOR_YELLOW_ON_RED, COLOR_YELLOW+8, COLOR_RED);
+    init_pair(PRINT_COLOR_WHITE_ON_BLACK, COLOR_WHITE+8, COLOR_BLACK);
+    init_pair(PRINT_COLOR_LMAGENT_ON_BLACK, COLOR_MAGENTA+8, COLOR_BLACK);
+    init_pair(PRINT_COLOR_RED_ON_WHITE, COLOR_RED+8, COLOR_WHITE+8);
     
     // Used in slb/tng main display
-    SLtt_set_color (PRINT_COLOR_WHITE_ON_RED,  "Keeper 0","white","red");
-    SLtt_set_color (PRINT_COLOR_WHITE_ON_BLUE, "Keeper 1","white","blue");
-    SLtt_set_color (PRINT_COLOR_WHITE_ON_GREEN,"Keeper 2","white","green");
-    SLtt_set_color (PRINT_COLOR_WHITE_ON_BROWN,"Keeper 3","white","brown");
-    SLtt_set_color (PRINT_COLOR_WHITE_ON_CYAN, "Keeper 4","white","cyan");
-    SLtt_set_color (15,"Unclaimed","lightgray","black");
-    SLtt_set_color (PRINT_COLOR_GREY_ON_BLACK  ,"Dirt/rock","gray","black");
-    SLtt_set_color (PRINT_COLOR_MAGENT_ON_WHITE, "graffiti", "magenta", "white");
+
+    /*
     SLtt_set_color (20,"Keeper 0","red","white");
     SLtt_set_color (PRINT_COLOR_BLUE_ON_LGREY  ,"Keeper 1","blue", "lightgray");
     SLtt_set_color (PRINT_COLOR_GREEN_ON_WHITE ,"Keeper 2","green", "white");
     SLtt_set_color (PRINT_COLOR_YELLOW_ON_LGREY,"Keeper 3","yellow", "lightgray");
     SLtt_set_color (PRINT_COLOR_CYAN_ON_WHITE  ,"Keeper 4","cyan","white");
-    SLtt_set_color (25,"Unclaimed", "black", "lightgray");
-    SLtt_set_color (26,"Dirt/rock","black", "lightgray");
+    */
+
+    init_pair (20, COLOR_RED, COLOR_WHITE);
+    init_pair (PRINT_COLOR_BLUE_ON_LGREY,   COLOR_BLUE, COLOR_WHITE);
+    init_pair (PRINT_COLOR_GREEN_ON_WHITE , COLOR_GREEN, COLOR_WHITE + 8);
+    init_pair (PRINT_COLOR_YELLOW_ON_LGREY, COLOR_YELLOW, COLOR_WHITE);
+    init_pair (PRINT_COLOR_CYAN_ON_WHITE  , COLOR_CYAN, COLOR_WHITE + 8);
+
+    init_pair(PRINT_COLOR_WHITE_ON_RED,  COLOR_WHITE + 8, COLOR_RED);
+    init_pair(PRINT_COLOR_WHITE_ON_BLUE, COLOR_WHITE + 8, COLOR_BLUE);
+    init_pair(PRINT_COLOR_WHITE_ON_GREEN,COLOR_WHITE + 8, COLOR_GREEN);
+    init_pair(PRINT_COLOR_WHITE_ON_BROWN,COLOR_WHITE + 8, COLOR_YELLOW);
+    init_pair(PRINT_COLOR_WHITE_ON_CYAN, COLOR_WHITE + 8, COLOR_CYAN);
+    init_pair(15, COLOR_WHITE, COLOR_BLACK);
+    init_pair(PRINT_COLOR_GREY_ON_BLACK, COLOR_WHITE, COLOR_BLACK);
+    init_pair(PRINT_COLOR_MAGENT_ON_WHITE, COLOR_MAGENTA, COLOR_WHITE+8);
+    init_pair(25, COLOR_BLACK, COLOR_WHITE);
+    init_pair(26, COLOR_BLACK, COLOR_WHITE);
     
+    /*
     // Used in dat display
     SLtt_set_color (30,"Keeper 0","brightred","black");
     SLtt_set_color (PRINT_COLOR_LBLUE_ON_BLACK,"Keeper 1","brightblue", "black");
@@ -217,10 +271,11 @@ void screen_init(void)
     SLtt_set_color (PRINT_COLOR_WHITE_ON_LGREEN,"Keeper 2","white","brightgreen");
     SLtt_set_color (PRINT_COLOR_WHITE_ON_YELLOW,"Keeper 3","white","yellow");
     SLtt_set_color (PRINT_COLOR_WHITE_ON_LCYAN, "Keeper 4","white","brightcyan");
+    */
 
-    SLtt_set_color (PRINT_COLOR_LRED_ON_YELLOW, "Highlight","brightred","yellow");
-    SLtt_set_color (PRINT_COLOR_LGREY_ON_GREY, "Brighened unowned","lightgray","gray");
-    SLtt_set_color (PRINT_COLOR_WHITE_ON_GREY, "Brighened","white","gray");
+    init_pair(PRINT_COLOR_LRED_ON_YELLOW, COLOR_RED + 8, COLOR_YELLOW);
+    init_pair(PRINT_COLOR_LGREY_ON_GREY, COLOR_YELLOW + 8, COLOR_WHITE);
+    init_pair(PRINT_COLOR_WHITE_ON_GREY, COLOR_WHITE + 8, COLOR_WHITE);
 
     screen_initied=true;
 }
@@ -324,9 +379,9 @@ int sigwinch (int sigtype)
 void screen_reinit_and_update(void)
 {
     if (!screen_initied) return;
-    SLsmg_reset_smg();
-    get_screen_size();
-    SLsmg_init_smg();
+    //SLsmg_reset_smg();
+    //get_screen_size();
+    //SLsmg_init_smg();
     draw_levscr(drawdata.scrmode,drawdata.workdata);
 }
 
@@ -337,7 +392,8 @@ void screen_done(void)
 {
     if (!screen_initied) return;
     set_cursor_visibility(true);
-    SLsmg_reset_smg();
+    endwin();
+    
     screen_initied=false;
 }
 

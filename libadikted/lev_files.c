@@ -215,6 +215,7 @@ short load_tng(struct LEVEL *lvl,char *fname)
     if (tng_num != lvl->tng_total_count)
     {
         message_error("Internal error in load_tng: tng_num=%d tng_total=%d", tng_num, lvl->tng_total_count);
+        memfile_free(&mem);
         return ERR_INTERNAL;
     }
     memfile_free(&mem);

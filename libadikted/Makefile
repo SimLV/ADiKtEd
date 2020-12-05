@@ -27,13 +27,20 @@ endif
 # Executable files extension on target environment
 BUILD_FOR_LINUX ?= 0
 ifeq ($(BUILD_FOR_LINUX), 1)
-  LIBEXT = .so
-  OTHER_LIBEXT = .dll
-  DLL_FLAG =
+  LIBEXT          = .so
+  LIBPFX          = lib
+  OTHER_LIBEXT    = .dll
+  DLL_FLAG        =
+  CROSS_COMPILE   =
+  PLATFORM_FLAGS  = -DBUILD_SINGLE=1 -D__fastcall= -Dunix=1 -fPIC
+  DLL_MAIN        =
 else
-  LIBEXT = .dll
-  OTHER_LIBEXT = .so
-  DLL_FLAG = -DBUILD_DLL
+  LIBEXT          = .dll
+  LIBPFX          =
+  OTHER_LIBEXT    = .so
+  DLL_FLAG        = -DBUILD_DLL
+  PLATFORM_FLAGS  = -march=pentium-mmx -mmmx
+  DLL_MAIN        = libadi_main.c
 endif
 # Allow debug executables to be created
 DEBUG ?= 0
@@ -44,7 +51,6 @@ else
 endif
 # Names of utility commands
 WARNFLAGS          = -Wall -Wextra -Wno-pedantic -Wno-conversion -Wno-traditional-conversion -Wno-sign-compare
-PLATFORM_FLAGS      = -march=pentium-mmx -mmmx
 CSTANDARD          = -std=c89
 CC                 = $(CROSS_COMPILE)gcc$(CROSS_EXEEXT) $(CSTANDARD) $(WARNFLAGS)
 CFLAGS             = -c -O -I. $(DLL_FLAG) -fexpensive-optimizations -O3 $(PLATFORM_FLAGS)
@@ -53,8 +59,8 @@ LINK               = $(CROSS_COMPILE)gcc$(CROSS_EXEEXT)
 WINDRES            = $(CROSS_COMPILE)windres$(CROSS_EXEEXT)
 RES                = obj/adikted_private.res
 RC                 = adikted_private.rc
-LFLAGS             = -shared $(PLATFORM_FLAGS)
-LFLAGS_DEBUG       = -shared $(PLATFORM_FLAGS) -DDEBUG
+LFLAGS             = -shared 
+LFLAGS_DEBUG       = -shared -DDEBUG
 LIBS               = -L.
 SRC                = \
 arr_utils.c \
@@ -69,7 +75,6 @@ lev_data.c \
 lev_files.c \
 lev_script.c \
 lev_things.c \
-libadi_main.c \
 memfile.c \
 msg_log.c \
 obj_actnpts.c \
@@ -80,11 +85,17 @@ obj_slabs.c \
 obj_things.c \
 xcubtxtr.c \
 xtabdat8.c \
-xtabjty.c
+xtabjty.c \
+$(DLL_MAIN)
+
 OBJ                = $(addprefix obj/,$(SRC:.c=.o))
-BIN                = bin/adikted$(LIBEXT)
+BIN                = bin/$(LIBPFX)adikted$(LIBEXT)
 RM                 = rm -f
 MKDIR              = mkdir -p
+
+ifneq ($(BUILD_FOR_LINUX), 1)
+RES_FILE =
+endif
 
 .PHONY: pre-build post-build all clean
 
@@ -96,11 +107,11 @@ make-directories:
 clean:
 	$(RM) $(OBJ) $(BIN) $(BIN:$(LIBEXT)=$(OTHER_LIBEXT)) $(RES)
 
-$(BIN): $(OBJ) $(RES)
-	$(LINK) $(if $(filter yes, $(DEBUGME)),$(LFLAGS_DEBUG),$(LFLAGS)) $(LIBS) -o $@ $(OBJ) $(RES)
+$(BIN): $(OBJ) $(RES_FILE)
+	$(LINK) $(if $(filter yes, $(DEBUGME)),$(LFLAGS_DEBUG),$(LFLAGS)) $(LIBS) -o $@ $(OBJ) $(RES_FILE)
 
 obj/%.o: %.c
 	$(CC) $(if $(filter yes, $(DEBUGME)),$(CFLAGS_DEBUG),$(CFLAGS)) $< -o $@
 
-$(RES): $(RC)
+$(RES_FILE): $(RC)
 	$(WINDRES) -i $< --input-format=rc -o $@ -O coff

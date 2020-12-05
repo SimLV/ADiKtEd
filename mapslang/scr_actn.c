@@ -1064,9 +1064,11 @@ void draw_map_area(struct SCRMODE_DATA *scrmode,struct MAPMODE_DATA *mapmode,str
               {
                   brighten_bg=false;
               }
-              screen_setcolor(get_draw_map_tile_color(scrmode,mapmode,lvl,tx,ty,has_ccol,darken_fg,brighten_bg));
+              int clr = get_draw_map_tile_color(scrmode,mapmode,lvl,tx,ty,has_ccol,darken_fg,brighten_bg);
+              screen_setcolor(clr);
               out_ch=get_draw_map_tile_char(mapmode,lvl,tx,ty,show_ground,show_rooms,show_things,(g>=0));
               screen_printchr(out_ch);
+              screen_resetcolor(clr);
             } else
             {
               screen_printchr(' ');

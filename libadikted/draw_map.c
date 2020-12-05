@@ -38,6 +38,12 @@
 #include "arr_utils.h"
 #include "lev_things.h"
 
+#ifdef unix
+
+#define __fastcall
+
+#endif
+
 /**
  * Intensified player colors array.
  * This array containing color intensity added to bitmap

@@ -27,14 +27,6 @@ ifneq (,$(findstring Windows,$(OS)))
 else
   CROSS_EXEEXT =
   CROSS_COMPILE = i686-w64-mingw32-
-  ifneq ($(BUILD_FOR_LINUX), 1)
-    ## build slang-pre2.3.3-24/stc/mkfiles/mkmake.c for linux, only the .exe is provided in the slang package
-    ## This is used to enable mingw32 DLL builds in linux
-    SLANG_BUILDCOMMAND = cp ./src/slconfig.h ./src/config.h && \
-                         gcc -I./src ./src/mkfiles/mkmake.c ./src/slprepr.c -o ./src/mkfiles/mkmake &&
-  else
-    SLANG_BUILDCOMMAND = ./configure && make
-  endif
 endif
 # Executable file extensions on target environment
 BUILD_FOR_LINUX ?= 0
@@ -44,80 +36,49 @@ ifeq ($(BUILD_FOR_LINUX), 1)
   LIBEXT = .so
   OTHER_LIBEXT = .dll
   DLL_FLAG =
-  SLANG_OBJ_FOLDER = elfobjs
+  CROSS_COMPILE =
 else
   EXEEXT = .exe
   OTHER_EXEEXT =
   LIBEXT = .dll
   OTHER_LIBEXT = .so
-  DLL_FLAG = -DSLANG_DLL=1
-  SLANG_OBJ_FOLDER = gw32objs
-  # S-Lang MinGW32 Makefile creation:
-  # -static-libgcc is also needed by libslang. So the 3 makefile.all files are patched.
-  # (Along with tweaking 'del'/'rm' to 'rm -f' for the clean process, and allowing TOOL_PREFIX, 
-  # CFLAGS, and LFLAGS to be passed to the compiler/linker from this Makefile.)
-  SLANG_PLATFORM = WIN32 MINGW32 DLL
-  SLANG_CFLAGS = -std=gnu89
-  SLANG_LFLAGS = -static-libgcc
-  SLANG_RC_FOLDER = ../../../mapslang/libslang-patches
-  SLANG_BUILDCOMMAND += \
-  patch -r - -N src/mkfiles/makefile.all ../../mapslang/libslang-patches/slang-src-mingw32-makefile.patch && \
-  patch -r - -N slsh/mkfiles/makefile.all ../../mapslang/libslang-patches/slang-slsh-mingw32-makefile.patch && \
-  patch -r - -N modules/mkfiles/makefile.all ../../mapslang/libslang-patches/slang-modules-mingw32-makefile.patch && \
-  TOOL_PREFIX='$(CROSS_COMPILE)' CFLAGS='$(SLANG_CFLAGS)' LFLAGS='$(SLANG_LFLAGS)' SLANG_RC_FOLDER='$(SLANG_RC_FOLDER)' mkfiles/build.sh $(SLANG_PLATFORM)
 endif
 # Allow debug executables to be created
 DEBUG ?= 0
-ifeq ($(DEBUG), 1)
-  DEBUGME = yes
+
+CURSES_URL         = https://github.com/wmcbrine/PDCurses/archive/master.zip
+CURSES_ZIP         = ../lib/curses.zip
+CURSES_DIR         = ../lib/curses
+CURSES_H           = $(CURSES_DIR)/curses.h
+
+ifeq ($(BUILD_FOR_LINUX), 1)
+  CURSES_LIB         = $(CURSES_DIR)/sdl2/pdcurses.a
+  PLATFORM_LFLAGS    = -lm -L../libadikted/bin -ladikted $(CURSES_DIR)/sdl2/pdcurses.a -lSDL2
+  PLATFORM_FLAGS     = -Dunix=1
+  RES                = 
 else
-  DEBUGME = no
+  PLATFORM_LFLAGS    = -static-libgcc 
+  PLATFORM_FLAGS     =
+  RES                = obj/map_private.res
 endif
-# Names of utility commands
-SLANG_URL          = https://www.jedsoft.org/releases/slang/slang-2.3.2.tar.bz2
-SLANG_NAME         = slang-2.3.2
-SLANG_ARCHIVE      = ../lib/slang.tgz
-SLANG_BIN_FOLDER   = /lib/$(SLANG_NAME)/src/$(SLANG_OBJ_FOLDER)
+
+ifeq ($(DEBUG), 1)
+DEBUG_CFLAGS = -g
+DEBUG_LFLAGS = -g
+else
+DEBUG_CFLAGS = -O2
+DEBUG_LFLAGS =
+endif
+
 WARNFLAGS          = -Wall -Wextra -Wno-pedantic -Wno-conversion -Wno-traditional-conversion -Wno-sign-compare
-PLATFORM_FLAGS     = -march=i486
-CSTANDARD          = -std=gnu89
+CSTANDARD          = -std=gnu99
 CC                 = $(CROSS_COMPILE)gcc$(CROSS_EXEEXT) $(CSTANDARD) $(WARNFLAGS)
-CFLAGS             = -c -O -I. -I../lib/$(SLANG_NAME)/src $(DLL_FLAG) $(PLATFORM_FLAGS) -DBUILD_SINGLE=1
-CFLAGS_DEBUG       = -c -g -I. -I../lib/$(SLANG_NAME)/src $(DLL_FLAG) $(PLATFORM_FLAGS) -DBUILD_SINGLE=1 -DDEBUG
+CFLAGS             = -c $(DEBUG_CFLAGS) -I. -I$(CURSES_DIR) $(DLL_FLAG) $(PLATFORM_FLAGS) -DBUILD_SINGLE=1
 LINK               = $(CROSS_COMPILE)gcc$(CROSS_EXEEXT)
 WINDRES            = $(CROSS_COMPILE)windres$(CROSS_EXEEXT)
-RES                = obj/map_private.res
 RC                 = map_private.rc
-LFLAGS             = -static-libgcc $(PLATFORM_FLAGS)
-LFLAGS_DEBUG       = -static-libgcc $(PLATFORM_FLAGS) -DDEBUG
-LIBS               = -L. -L..$(SLANG_BIN_FOLDER) -lslang
-L                  = ../libadikted/
-
-LIB_SRC= \
-$(L)arr_utils.c \
-$(L)bulcommn.c \
-$(L)dernc.c \
-$(L)draw_map.c \
-$(L)graffiti.c \
-$(L)graffiti_font.c \
-$(L)lbfileio.c \
-$(L)lev_column.c \
-$(L)lev_data.c \
-$(L)lev_files.c \
-$(L)lev_script.c \
-$(L)lev_things.c \
-$(L)libadi_main.c \
-$(L)memfile.c \
-$(L)msg_log.c \
-$(L)obj_actnpts.c \
-$(L)obj_column.c \
-$(L)obj_column_def.c \
-$(L)obj_column_per.c \
-$(L)obj_slabs.c \
-$(L)obj_things.c \
-$(L)xcubtxtr.c \
-$(L)xtabdat8.c \
-$(L)xtabjty.c
+LFLAGS             = $(PLATFORM_LFLAGS)
+LIBS               =
 
 SRC                = \
 input_kb.c \
@@ -139,28 +100,37 @@ var_utils.c
 OBJ                = $(addprefix obj/,$(SRC:.c=.o))
 LIB_OBJ            = $(addprefix obj/lib/,$(LIB_SRC:.c=.o))
 BIN                = bin/map$(EXEEXT)
-LIB_SLANG          = libslang$(LIBEXT)
 RM                 = rm -f
 MKDIR              = mkdir -p
 CP                 = cp -f
 STRIP              = strip --strip-all
 
-.PHONY: pre-build post-build all clean
+.PHONY: pre-build post-build all clean standard
 
 all: make-directories pre-build $(SRC) $(BIN) post-build
 
+standard: $(BIN)
+
 make-directories:
-	$(MKDIR) ../lib bin obj obj/lib obj/libadikted
+	$(MKDIR) ../lib bin obj obj/lib
+
+ifeq ($(BUILD_FOR_LINUX), 1)
+
+create-package: fill-pkg-directory
+	$(CP) ../libadikted/bin/libadikted.so pkg/
+
+else
 
 create-package: fill-pkg-directory
 
+endif
+
 strip-executables:
-	$(STRIP) pkg/map$(EXEEXT) pkg/$(LIB_SLANG)
+	$(STRIP) pkg/map$(EXEEXT)
 
 fill-pkg-directory:
 	$(MKDIR) pkg/docs
 	$(CP) $(BIN) pkg/
-	$(CP) ..$(SLANG_BIN_FOLDER)/$(LIB_SLANG) pkg/
 	$(CP) map.hlp pkg/
 	$(CP) map.ini pkg/
 	$(CP) ../docs/* pkg/docs/
@@ -170,30 +140,33 @@ post-build: create-package
 pre-build:
 
 clean-inc-libs: clean
-	cd ../lib/$(SLANG_NAME) && make clean
+	cd ../libadikted && make clean
 
 clean:
 	$(RM) $(OBJ) $(LIB_OBJ) $(BIN) $(BIN:$(EXEEXT)=$(OTHER_EXEEXT)) $(RES)
 	$(RM)r pkg/*
 
-$(BIN): $(OBJ) $(LIB_OBJ) $(RES)
-	$(LINK) $(if $(filter yes, $(DEBUGME)),$(LFLAGS_DEBUG),$(LFLAGS)) $(LIBS) -o $@ $(OBJ) $(LIB_OBJ) $(RES)
+$(BIN): $(OBJ) $(LIB_OBJ) $(RES) ../libadikted/libadikted$(LIBEXT)
+	$(LINK) -o $@ $(DEBUG_LFLAGS) $(OBJ) $(LIB_OBJ) $(RES) $(LIBS) $(LFLAGS) 
 
-obj/lib/../libadikted/%.o: ../libadikted/%.c
-	@echo 'BB'
-	$(CC) $(if $(filter yes, $(DEBUGME)),$(CFLAGS_DEBUG),$(CFLAGS)) $< -o $@
+obj/input_kb.o: input_kb.c $(CURSES_H)
+	@echo 'ZZ $@'
+	$(CC) $(CFLAGS) $< -o $@
 
 obj/%.o: %.c
-	@echo 'AA'
-	$(CC) $(if $(filter yes, $(DEBUGME)),$(CFLAGS_DEBUG),$(CFLAGS)) $< -o $@
+	$(CC) $(CFLAGS) $< -o $@
+
+../libadikted/libadikted$(LIBEXT):
+	cd ../libadikted && make BUILD_FOR_LINUX=$(BUILD_FOR_LINUX) DEBUG=$(DEBUG)
 
 $(RES): $(RC)
 	$(WINDRES) -i $< --input-format=rc -o $@ -O coff
-
-$(SLANG_ARCHIVE):
-	curl -f -L -o $@ $(SLANG_URL)
-
-$(LIB_SLANG): $(SLANG_ARCHIVE)
-	-tar -C ../lib/ -xf $<
-	cd ../lib/$(SLANG_NAME) && $(SLANG_BUILDCOMMAND)
-	-$(RM) ..$(SLANG_BIN_FOLDER)/libslang.a
+  
+  
+$(CURSES_ZIP):
+	curl -f -L -o $@ $(CURSES_URL)
+  
+$(CURSES_LIB) $(CURSES_H): $(CURSES_ZIP)
+	echo $(CURSES_H) && file $(CURSES_H) $(CURSES_ZIP)
+	cd ../lib && unzip -o $< && mkdir -p curses && mv -n PDCurses-master/* $(CURSES_DIR)
+	cd $(CURSES_DIR)/sdl2 && make

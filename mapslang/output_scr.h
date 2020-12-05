@@ -97,6 +97,7 @@ int get_screen_rows(void);
 int get_screen_cols(void);
 void set_cursor_pos(int row,int col);
 void screen_setcolor(int idx);
+void screen_resetcolor(int idx);
 void screen_printchr(char dst);
 void screen_printf(char *format, ...);
 void screen_printf_toeol(char *format, ...);

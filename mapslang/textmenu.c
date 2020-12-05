@@ -684,8 +684,7 @@ void draw_menuscr(struct workmenu *currmnu,int tot_rows,int tot_cols)
       cr = currmnu->limit_max-currmnu->limit_min > 10 ? 10 : currmnu->limit_max-currmnu->limit_min;
       cy = ((rows-cr)>>1);
       cx = ((cols-currmnu->choicecols*currmnu->choicew)>>1);
-      SLsmg_fill_region (cy-1, cx-1, 
-               cr+2, currmnu->choicew*currmnu->choicecols+2, ' ');
+      text_fill_region (cy-1, cx-1, cr+2, currmnu->choicew*currmnu->choicecols+2, ' ');
       for (i=0; i < currmnu->limit_max-currmnu->limit_min; i++)
       {
         set_cursor_pos((i%10)+cy, (i/10)*currmnu->choicew+cx);
