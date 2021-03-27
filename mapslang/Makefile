@@ -53,7 +53,7 @@ CURSES_H           = $(CURSES_DIR)/curses.h
 
 ifeq ($(BUILD_FOR_LINUX), 1)
   CURSES_LIB         = $(CURSES_DIR)/sdl2/pdcurses.a
-  PLATFORM_LFLAGS    = -lm -L../libadikted/bin -ladikted $(CURSES_DIR)/sdl2/pdcurses.a -lSDL2
+  PLATFORM_LFLAGS    = -lm -L../libadikted/bin -ladikted $(CURSES_DIR)/sdl2/pdcurses.a -lSDL2 -lSDL2_ttf
   PLATFORM_FLAGS     = -Dunix=1
   RES                = 
 else
@@ -178,7 +178,7 @@ $(CURSES_ZIP):
 $(CURSES_LIB) $(CURSES_H): $(CURSES_ZIP)
 	echo $(CURSES_H) && file $(CURSES_H) $(CURSES_ZIP)
 	cd ../lib && unzip -o $< && mkdir -p curses && mv -n PDCurses-master/* $(CURSES_DIR)
-	cd $(CURSES_DIR)/sdl2 && make
+	cd $(CURSES_DIR)/sdl2 && make WIDE=Y UTF8=Y
 
 $(SLANG_ARCHIVE):
 	curl -f -L -o $@ $(SLANG_URL)
