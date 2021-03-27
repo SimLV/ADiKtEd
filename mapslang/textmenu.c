@@ -21,12 +21,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+//#include <slang.h>
 
 #include "textmenu.h"
 
 #include "../libadikted/globals.h"
 #include "input_kb.h"
 #include "output_scr.h"
+#include "var_utils.h"
+
+extern void text_fill_region(int y1, int x1, int y2, int x2, int ch);
 
 inline union _value menu_value_num(long num)
 { union _value ret; ret.num=num; return ret; }

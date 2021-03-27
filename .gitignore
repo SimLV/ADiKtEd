@@ -4,9 +4,10 @@
 *.dll
 *.def
 *.exe
-/lib/slang-*
-/lib/slang.tgz
 /lib/curses/
 /lib/curses.zip
 /lib/PDCurses-master/
+/lib/slang*
 /mapslang/pkg/*
+.vs/
+.git

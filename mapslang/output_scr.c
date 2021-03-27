@@ -23,6 +23,8 @@
 #include "../libadikted/adikted.h"
 #include <curses.h>
 
+#include "scr_actn.h"
+
 short screen_initied=false;
 struct DRAW_DATA drawdata;
 
@@ -277,6 +279,48 @@ void screen_init(void)
     init_pair(PRINT_COLOR_LGREY_ON_GREY, COLOR_YELLOW + 8, COLOR_WHITE);
     init_pair(PRINT_COLOR_WHITE_ON_GREY, COLOR_WHITE + 8, COLOR_WHITE);
 
+/* Slang version
+    static const char* fg_color[16] =
+    {
+        "red", "lightgray", "black", "lightgray",
+        "black", "lightgray", "black", "green",
+        "blue", "black", "gray", "gray",
+        "gray", "black", "gray", "gray",
+    };
+    static const char* bg_color[16] =
+    {
+      "black", "red", "green", "blue",
+      "brown", "magenta", "cyan", "black",
+      "gray", "brightred", "brightgreen", "brightblue",
+      "yellow", "brightmagenta", "brightcyan", "white",
+    };
+    for (int i = 0; i < 16; i++)
+    {
+        char buf[32];
+        sprintf(buf, "tileset %d", i);
+
+        SLtt_set_color (PRINT_COLOR_TILESET + i, buf, fg_color[i], bg_color[i]);
+    }
+*/
+    static int fg_color[16] =
+    {
+        COLOR_RED, COLOR_WHITE + 8, COLOR_BLACK, COLOR_WHITE + 8,
+        COLOR_BLACK, COLOR_WHITE + 8, COLOR_BLACK, COLOR_GREEN,
+        COLOR_BLUE, COLOR_BLACK, COLOR_WHITE, COLOR_WHITE,
+        COLOR_WHITE, COLOR_BLACK, COLOR_WHITE, COLOR_WHITE,
+    };
+    static int bg_color[16] =
+    {
+        COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_BLUE,
+        COLOR_YELLOW, COLOR_MAGENTA, COLOR_CYAN, COLOR_BLACK,
+        COLOR_WHITE, COLOR_RED + 8, COLOR_GREEN + 8, COLOR_BLUE + 8,
+        COLOR_YELLOW + 8, COLOR_MAGENTA + 8, COLOR_CYAN + 8, COLOR_WHITE + 8,
+    };
+    
+    for (int i = 0; i < 16; i++)
+    {
+        init_pair(PRINT_COLOR_TILESET + i,fg_color[i], bg_color[i]);
+    }
     screen_initied=true;
 }
 

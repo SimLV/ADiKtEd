@@ -50,8 +50,9 @@ else
   DEBUGME = no
 endif
 # Names of utility commands
-WARNFLAGS          = -Wall -Wextra -Wno-pedantic -Wno-conversion -Wno-traditional-conversion -Wno-sign-compare
-CSTANDARD          = -std=c89
+WARNFLAGS          = -Wall -Wextra -pedantic -Wno-conversion -Wno-traditional-conversion -Wno-sign-compare -Werror-implicit-function-declaration
+
+CSTANDARD          = -std=gnu99
 CC                 = $(CROSS_COMPILE)gcc$(CROSS_EXEEXT) $(CSTANDARD) $(WARNFLAGS)
 CFLAGS             = -c -O -I. $(DLL_FLAG) -fexpensive-optimizations -O3 $(PLATFORM_FLAGS)
 CFLAGS_DEBUG       = -c -g -I. $(DLL_FLAG) $(PLATFORM_FLAGS) -DDEBUG

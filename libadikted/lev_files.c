@@ -20,6 +20,8 @@
 #include "lev_files.h"
 
 #include <sys/stat.h>
+#include <string.h>
+
 #include "globals.h"
 #include "arr_utils.h"
 #include "memfile.h"
@@ -678,6 +680,25 @@ short load_wlb(struct LEVEL *lvl,char *fname)
         lvl->wlb[j][i]=mem->content[mempos];
       }
     memfile_free(&mem);
+    return ERR_NONE;
+}
+
+/**
+ * Reads the SLX file into LEVEL structure.
+ * @param lvl Pointer to the LEVEL structure.
+ * @param fname Source file name.
+ * @return Returns ERR_NONE on success, error code on failure.
+ */
+short load_slx(struct LEVEL *lvl,char *fname)
+{
+    message_log("  load_slx: started");
+    short result;
+    FILE *F = fopen(fname, "rb");
+    if (F == NULL)
+        return ERR_FILE_BADDATA;
+    if (1 != fread(lvl->slx_data, sizeof(lvl->slx_data), 1, F))
+        return ERR_FILE_BADDATA;
+    fclose(F);
     return ERR_NONE;
 }
 
@@ -1445,6 +1466,25 @@ short write_text_file(char **lines,int lines_count,char *fname)
 }
 
 /**
+ * Writes extended info
+ * SLX consist of extended slab flags (i.e. tileset)
+ * @param lvl Pointer to the LEVEL structure.
+ * @param fname Destination file name.
+ * @return Returns ERR_NONE on success, error code on failure.
+ */
+short write_slx(struct LEVEL *lvl,char *fname)
+{
+  message_log(" write_slx: starting");
+
+  FILE* fp = fopen(fname, "wb");
+  if (fp==NULL)
+    return ERR_CANT_OPENWR;
+  fwrite(lvl->slx_data, sizeof(lvl->slx_data), 1, fp);
+  fclose(fp);
+  return ERR_NONE;
+}
+
+/**
  * Saves any map file, showing error/warning message if it is required.
  * @param lvl Pointer to the LEVEL structure.
  * @param fext Extension of destination file name.
@@ -1535,6 +1575,8 @@ short save_dk1_map(struct LEVEL *lvl)
     save_mapfile(lvl,lvl->savfname,"vsn",write_vsn,&saved_files,&result);
     total_files++;
     save_mapfile(lvl,lvl->savfname,"adi",write_adi_script,&saved_files,&result);
+    total_files++;
+    save_mapfile(lvl,lvl->savfname,"slx",write_slx,&saved_files,&result);
     total_files++;
 
     if ((result==ERR_NONE)||(strlen(lvl->fname)<1))
@@ -1905,6 +1947,8 @@ short load_dk1_map(struct LEVEL *lvl)
       load_mapfile(lvl,"lif",load_lif,&loaded_files,&result,LFF_IGNORE_WITHOUT_WARN);
   if (result>=ERR_NONE)
       load_mapfile(lvl,"vsn",load_vsn,&loaded_files,&result,LFF_IGNORE_WITHOUT_WARN);
+  if (result>=ERR_NONE)
+      load_mapfile(lvl,"slx",load_slx,&loaded_files,&result,LFF_IGNORE_WITHOUT_WARN);
   if (result>=ERR_NONE)
       load_mapfile_msg(lvl,"adi",script_load_and_execute,&loaded_files,&result,LFF_IGNORE_WITHOUT_WARN);
 

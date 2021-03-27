@@ -70,7 +70,15 @@ DEBUG_CFLAGS = -O2
 DEBUG_LFLAGS =
 endif
 
-WARNFLAGS          = -Wall -Wextra -Wno-pedantic -Wno-conversion -Wno-traditional-conversion -Wno-sign-compare
+# Names of utility commands
+SLANG_URL          = https://www.jedsoft.org/releases/slang/slang-2.3.2.tar.bz2
+SLANG_NAME         = slang-2.3.2
+SLANG_ARCHIVE      = ../lib/slang.tar.bz2
+SLANG_BIN_FOLDER   = /lib/$(SLANG_NAME)/src/$(SLANG_OBJ_FOLDER)
+WARNFLAGS          = -Wall -Wextra -Werror-implicit-function-declaration -Wno-conversion -Wno-traditional-conversion -Wno-sign-compare
+# is it actually needed?
+#PLATFORM_FLAGS     = -march=i486
+
 CSTANDARD          = -std=gnu99
 CC                 = $(CROSS_COMPILE)gcc$(CROSS_EXEEXT) $(CSTANDARD) $(WARNFLAGS)
 CFLAGS             = -c $(DEBUG_CFLAGS) -I. -I$(CURSES_DIR) $(DLL_FLAG) $(PLATFORM_FLAGS) -DBUILD_SINGLE=1
@@ -92,6 +100,7 @@ scr_list.c \
 scr_rwrk.c \
 scr_slab.c \
 scr_thing.c \
+scr_tileset.c \
 scr_txted.c \
 scr_txtgen.c \
 textmenu.c \
@@ -141,6 +150,7 @@ pre-build:
 
 clean-inc-libs: clean
 	cd ../libadikted && make clean
+	if [ -e ../lib/$(SLANG_NAME) ]; then cd ../lib/$(SLANG_NAME) && make clean; fi
 
 clean:
 	$(RM) $(OBJ) $(LIB_OBJ) $(BIN) $(BIN:$(EXEEXT)=$(OTHER_EXEEXT)) $(RES)
@@ -162,7 +172,6 @@ obj/%.o: %.c
 $(RES): $(RC)
 	$(WINDRES) -i $< --input-format=rc -o $@ -O coff
   
-  
 $(CURSES_ZIP):
 	curl -f -L -o $@ $(CURSES_URL)
   
@@ -170,3 +179,15 @@ $(CURSES_LIB) $(CURSES_H): $(CURSES_ZIP)
 	echo $(CURSES_H) && file $(CURSES_H) $(CURSES_ZIP)
 	cd ../lib && unzip -o $< && mkdir -p curses && mv -n PDCurses-master/* $(CURSES_DIR)
 	cd $(CURSES_DIR)/sdl2 && make
+
+$(SLANG_ARCHIVE):
+	curl -f -L -o $@ $(SLANG_URL)
+
+$(LIB_SLANG): $(SLANG_ARCHIVE)
+	-tar -C ../lib/ -xf $<
+	cd ../lib/$(SLANG_NAME) && $(SLANG_BUILDCOMMAND)
+	-$(RM) ..$(SLANG_BIN_FOLDER)/libslang.a
+
+$(LIB_ADIKTED):
+	cd ../libadikted && make
+
