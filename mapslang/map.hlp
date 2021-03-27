@@ -2312,14 +2312,14 @@ This one looks dark.
 
 
 
-\rStatue 6\s
+\rCustom special box\s
 
+Dungeon Special box that allows 
+the mapmaker to trigger a custom
+script. So anything goes.
 
-
-
-
-
-
+The number determines you give it
+determines the box flag.
 \rArmageddon Spell\s
 
 A spell book. If taken to Library
@@ -2391,6 +2391,29 @@ and rougher earth.
 On this texture walls are brighter
 than standard, and reliefs are
 representing skulls of various size.
+
+
+
+\rDesert Tomb texture\s
+
+On this texture floors have a
+checkerboard pattern, and reliefs 
+are inspired by ancient egypt.
+
+
+
+\rGypsum texture\s
+
+On this texture walls and floors are 
+bright, white and shiny.
+
+
+
+
+\rLilac Stone texture\s
+
+On this texture everything has a 
+distinct purple hue.
 
 
 
