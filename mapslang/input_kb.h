@@ -89,7 +89,9 @@
 #define KEY_PGDOWN     0x106
 #define KEY_HOME       0x107
 #define KEY_END        0x108
-#define KEY_DEL        0x113
+
+// SLang #define KEY_DEL        0x113
+#define KEY_DEL        330
 
 //TODO: set proper values here when Slang will support this
 #define KEY_CTRL_UP     0x5101
