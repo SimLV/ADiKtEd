@@ -23,6 +23,9 @@
 #include "../libadikted/adikted.h"
 #include <curses.h>
 
+//#include <sdl2/pdcsdl.h>
+extern int pdc_font_size;
+
 #include "scr_actn.h"
 
 short screen_initied=false;
@@ -164,6 +167,7 @@ void screen_init(void)
 #if defined(unix) && !defined(GO32)
     signal (SIGWINCH, (void *) sigwinch);
 #endif
+    pdc_font_size = 32;
 
     if (initscr()==0)
     {
