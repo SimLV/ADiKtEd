@@ -435,6 +435,7 @@ short start_help(struct SCRMODE_DATA *scrmode,struct WORKMODE_DATA *workdata)
       case MD_TLST:
           help->rows=help->tileset.numrows;
           help->text = help->tileset.lines;
+          break;
       default:
         help->rows=0;
         help->text=NULL;

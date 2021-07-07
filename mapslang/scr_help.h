@@ -124,7 +124,7 @@ struct HELP_DATA {
     int cclmdescrows;
     char **cclmdesc;
 
-    HelpInfo tileset;
+    struct HelpInfo tileset;
   };
 
 //Functions - init and free
